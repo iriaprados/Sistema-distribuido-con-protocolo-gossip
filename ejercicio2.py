@@ -28,11 +28,14 @@ network = {
 }
 
 # FUNCIÓN GOSSIP
-# Añadir emisor, que sirve para indicar quien envía el mensaje 
-# FUNCIÓN GOSSIP
 def gossip(node, message, network, visited, max_visits, p_stop, start_node): 
     global parar 
 
+    # Si el nodo ya ha recibido el mensaje, no se retransmite este de nuevo
+    if node in visited: 
+        print(f"Nodo {node} ya ha recibido el mensaje previamente y no lo retransmitirá.")
+        return
+    
     # El nodo es 1, quien inicia la comunicación
     if node == start_node: 
         with mutex: 
@@ -69,9 +72,6 @@ def gossip(node, message, network, visited, max_visits, p_stop, start_node):
                     gossip(neighbor, message, network, visited, max_visits, p_stop, start_node)
             else: 
                 print(f"Nodo {node} ha decidido no enviar el mensaje debido a la probabilidad.")
-
-
-
 
 def main():
     global parar
