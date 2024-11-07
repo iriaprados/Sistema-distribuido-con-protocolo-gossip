@@ -81,7 +81,12 @@ def main():
     max_visits = 10
     p_stop = 0.5
     parar = False  
-    
+
+    # Indicar nodos totales visitados 
+    start_time = time.time()
+    while time.time() - start_time < 1:  # Ejecutar durante 1 segundo
+        time.sleep(0.1)  
+
     threads = []
     for node in network.keys():
         thread = threading.Thread(target=gossip, args=(node, message, network, visited, max_visits, p_stop, start_node))
@@ -90,6 +95,9 @@ def main():
     
     for thread in threads:
         thread.join()
+    
+    # Indicar los nodos visitados respuecto del total de nodos de la red 
+    print(f'Han sido visitados {len(visited)} nodos de un total de {len(network)} nodos.')
 
 if __name__ == "__main__":
     main()
