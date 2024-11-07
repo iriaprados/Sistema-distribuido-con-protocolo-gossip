@@ -31,11 +31,6 @@ network = {
 def gossip(node, message, network, visited, max_visits, p_stop, start_node): 
     global parar 
 
-    # Si el nodo ya ha recibido el mensaje, no se retransmite este de nuevo
-    if node in visited: 
-        print(f"Nodo {node} ya ha recibido el mensaje previamente y no lo retransmitirá.")
-        return
-    
     # El nodo es 1, quien inicia la comunicación
     if node == start_node: 
         with mutex: 
@@ -60,7 +55,12 @@ def gossip(node, message, network, visited, max_visits, p_stop, start_node):
                     parar = True  # Se activa parar, para finalizar la ejecución de "gossip"
                 if parar:
                     return  # Salir si se ha alcanzado el máximo y se debe detener
-            
+                
+            # Si el nodo ya ha recibido el mensaje, no se retransmite de nuevo
+            if node in visited: 
+             print(f"Nodo {node} ya ha recibido el mensaje previamente y no lo retransmitirá.")
+             return
+    
             if random.random() > p_stop:  # Si el número aleatorio es mayor al valor de la probabilidad p_stop 
                 with mutex:
                     visited.add(node)  # Comunicar con el nodo 
@@ -79,7 +79,7 @@ def main():
     message = "Cotilleo!!"
     visited = set()
     max_visits = 10
-    p_stop = 0.4
+    p_stop = 0.5
     parar = False  
     
     threads = []
