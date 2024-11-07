@@ -1,73 +1,89 @@
-# EJERCICIO 2 - SISTEMA DISTRIBUIDO CON GOSSIP 
+# EJERCICIO 2 - RED CON PROTOCOLO GOSSIP 
 
-# IMPORTAR LIBRERÍAS 
-import time  # Librería para las interrupciones. 
-import random  # Librería para generar números aleatorios. 
-import threading  # Librería para la implementación de hilos
+# Importar librerías 
+import time
+import random
+import threading
 
-mutex = threading.Lock()  # Crear mutex 
+mutex = threading.Lock() # Mutex, para evitar condicones de carrera 
+parar = False  # Variable global para detener la propagación una vez alcanzado el límite
 
-# ESTRUCTURA DE LA RED
-network = {  # Diccionario para representar la red. 
-    1: [2, 3, 4], 
-    2: [1, 5, 6], 
-    3: [1, 7, 8], 
-    4: [1, 9, 10], 
-    5: [2, 11, 12], 
-    6: [2, 13], 
-    7: [3, 14], 
-    8: [3, 15], 
-    9: [4], 
-    10: [4], 
-    11: [5], 
-    12: [5], 
-    13: [6], 
-    14: [7], 
-    15: [8] 
+# ESTRUCTURA DE LA RED  
+network = {
+    1: [2, 3, 4],
+    2: [1, 5, 6],
+    3: [1, 7, 8],
+    4: [1, 9, 10],
+    5: [2, 11, 12],
+    6: [2, 13],
+    7: [3, 14],
+    8: [3, 15],
+    9: [4],
+    10: [4],
+    11: [5],
+    12: [5],
+    13: [6],
+    14: [7],
+    15: [8]
 }
 
-def gossip (node, message, network, visited, max_visits, p_stop, start_node): 
+# FUNCIÓN GOSSIP
+def gossip(node, message, network, visited, max_visits, p_stop, start_node): 
     
-    if node == start_node:
-        print(f"{node} inicia la propagación del mensaje: '{message}'")
-        visited[node] = visited.get(node, 0) + 1
-    else: 
-        while node not in visited: 
-            time.sleep(0.1)
-    
-    while visited [node] <= max_visits: 
-        if random.random() <= p_stop:
-            print(f'El nodo {node} decidió parar la propagación')
-            break
-        for vecino in network[node]: 
-            if vecino not in visited: 
-                print(f"{node} envía mensaje a {vecino}")
-                visited[vecino] = visited.get(vecino, 0) + 1
+    global parar 
+
+    # El nodo es 1, quien incia la comunicación
+    if node == start_node: 
+        with mutex: 
+            if parar: # Si se ha alcanzado el máximo de visitas 
+                return # Se sale de la función 
+            visited.add(node) # No se ha alcanzado el máximo de visitas, sigue comunicación 
+        print(f'Nodo {node} ha recibido el mensaje, nodo que inicia comunicación.')
         
-        visited[node] += 1
-
-        time.sleep(0.1)
+        # Seleccionar tres vecinos del nodo 1, de forma aleatoria, y se indican como nuevos nodos 
+        neighbors = network[node]
+        for neighbor in random.sample(neighbors, min(3, len(neighbors))):
+            gossip(neighbor, message, network, visited, max_visits, p_stop, start_node)
     
-    print(f"{node} ha alcanzado el límite de visitas o detenido la propagación.")
+    # El nodo no es el nodo que inicia la comunicación 
+    else:
+        while node not in visited: # Mientras el nodo no se halla visitado
+            time.sleep(0.1) # Pausa de 0.1 seg. entre las comunicaciones 
+            
+            with mutex:
+                if len(visited) >= max_visits and not parar: # Se ha alcanzado el número máximo de visitas 
+                    print(f"Se ha alcanzado el número máximo de visitas ({max_visits}). Nodos visitados: {len(visited)}")
+                    parar = True  # Se activa parar, para finalizar la ejecucción de "gossip"
+                if parar:
+                    return  # Salir si se ha alcanzado el máximo y se debe detener
+            
+            if random.random() > p_stop: # Si el número aleatorio es mayor al valor de la probabilidad de p_stop 
+                with mutex:
+                    visited.add(node) # Comunicar con el nodo 
+                print(f'Nodo {node} ha recibido el mensaje.')
+                
+                # Seleccionar hasta tres vecinos, para continuar con la propagación
+                neighbors = network[node]
+                for neighbor in random.sample(neighbors, min(3, len(neighbors))):
+                    gossip(neighbor, message, network, visited, max_visits, p_stop, start_node)
 
-def main (): 
-    start_node = 1       # Nodo de inicio
-    message = "Hello"    # Mensaje a propagar
-    visited = {}         # Conjunto de nodos visitados
-    max_visits = 30       # Número máximo de visitas
-    p_stop = 0.2         # Probabilidad de detener la propagación
-
+def main():
+    global parar
+    start_node = 1
+    message = "Hello"
+    visited = set()
+    max_visits = 10
+    p_stop = 0.4
+    parar = False  
+    
     threads = []
-    
-    # Crear y lanzar hilos para cada nodo
     for node in network.keys():
         thread = threading.Thread(target=gossip, args=(node, message, network, visited, max_visits, p_stop, start_node))
         threads.append(thread)
         thread.start()
-
-    # Esperar a que todos los hilos terminen
+    
     for thread in threads:
         thread.join()
 
-# Llamada a la función principal
-main()
+if __name__ == "__main__":
+    main()
