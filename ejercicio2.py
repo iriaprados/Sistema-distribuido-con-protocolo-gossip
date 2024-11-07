@@ -28,7 +28,8 @@ network = {
 }
 
 # FUNCIÓN GOSSIP
-def gossip(node, message, network, visited, max_visits, p_stop, start_node): 
+# Añadir emisor, que sirve para indicar quien envía el mensaje 
+def gossip(node, message, network, visited, max_visits, p_stop, start_node, emisor= None): 
     
     global parar 
 
@@ -38,12 +39,12 @@ def gossip(node, message, network, visited, max_visits, p_stop, start_node):
             if parar: # Si se ha alcanzado el máximo de visitas 
                 return # Se sale de la función 
             visited.add(node) # No se ha alcanzado el máximo de visitas, sigue comunicación 
-        print(f'Nodo {node} ha recibido el mensaje, nodo que inicia comunicación.')
+        print(f'Nodo {node} ha recibido el mensaje, nodo que inicia comunicación, del mensaje {message}')
         
         # Seleccionar tres vecinos del nodo 1, de forma aleatoria, y se indican como nuevos nodos 
         neighbors = network[node]
         for neighbor in random.sample(neighbors, min(3, len(neighbors))):
-            gossip(neighbor, message, network, visited, max_visits, p_stop, start_node)
+            gossip(neighbor, message, network, visited, max_visits, p_stop, start_node, emisor=node)
     
     # El nodo no es el nodo que inicia la comunicación 
     else:
@@ -60,17 +61,22 @@ def gossip(node, message, network, visited, max_visits, p_stop, start_node):
             if random.random() > p_stop: # Si el número aleatorio es mayor al valor de la probabilidad de p_stop 
                 with mutex:
                     visited.add(node) # Comunicar con el nodo 
-                print(f'Nodo {node} ha recibido el mensaje.')
+                print(f'Nodo {node} ha recibido el mensaje {message}, enviado por el nodo {emisor}.')
                 
                 # Seleccionar hasta tres vecinos, para continuar con la propagación
                 neighbors = network[node]
                 for neighbor in random.sample(neighbors, min(3, len(neighbors))):
-                    gossip(neighbor, message, network, visited, max_visits, p_stop, start_node)
+                    gossip(neighbor, message, network, visited, max_visits, p_stop, start_node, emisor=node)
+            else: 
+                print(f"Nodo {node} ha decidido no enviar el mensaje debido a la probabilidad.")
+
+
+
 
 def main():
     global parar
     start_node = 1
-    message = "Hello"
+    message = "Cotilleo!!"
     visited = set()
     max_visits = 10
     p_stop = 0.4
@@ -78,7 +84,7 @@ def main():
     
     threads = []
     for node in network.keys():
-        thread = threading.Thread(target=gossip, args=(node, message, network, visited, max_visits, p_stop, start_node))
+        thread = threading.Thread(target=gossip, args=(node, message, network, visited, max_visits, p_stop, start_node, None))
         threads.append(thread)
         thread.start()
     
