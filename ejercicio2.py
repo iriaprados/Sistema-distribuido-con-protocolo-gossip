@@ -97,7 +97,9 @@ def main():
         thread.join()
     
     # Indicar los nodos visitados respuecto del total de nodos de la red 
+    print(f'\n{"★ "*26}')
     print(f'Han sido visitados {len(visited)} nodos de un total de {len(network)} nodos.')
+    print(f'{"★ "*26}\n')
 
 if __name__ == "__main__":
     main()
