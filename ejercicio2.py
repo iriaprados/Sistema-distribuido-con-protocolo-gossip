@@ -31,48 +31,45 @@ network = {
 def gossip(node, message, network, visited, max_visits, p_stop, start_node): 
     global parar 
 
-    # El nodo es 1, quien inicia la comunicación
-    if node == start_node: 
+    if node == start_node:  # Nodo inicial de comunicación
         with mutex: 
-            if parar:  # Si se ha alcanzado el máximo de visitas 
-                return  # Se sale de la función 
-            visited.add(node)  # No se ha alcanzado el máximo de visitas, sigue comunicación 
-        print(f'Nodo {node} ha recibido el mensaje, nodo que inicia comunicación, del mensaje {message}')
+            if parar:  # Detener si se ha alcanzado el límite
+                return
+            visited.add(node)  # Agregar nodo a los visitados
+        print(f'Nodo {node} ha recibido el mensaje, este es el nodo que inicia comunicación con el mensaje {message}')
         
-        # Seleccionar tres vecinos del nodo 1, de forma aleatoria, y se indican como nuevos nodos 
-        neighbors = network[node]
-        for neighbor in random.sample(neighbors, min(3, len(neighbors))):
-            gossip(neighbor, message, network, visited, max_visits, p_stop, start_node)
+        # Seleccionar tres vecinos al azar y continuar la propagación
+        vecinos = network[node]
+        for i in random.sample(vecinos, min(3, len(vecinos))):
+            gossip(i, message, network, visited, max_visits, p_stop, start_node)
     
-    # El nodo no es el nodo que inicia la comunicación 
-    else:
+    else:  # Nodos que no son el nodo inicial
         while node not in visited:  # Mientras el nodo no se haya visitado
-            time.sleep(0.1)  # Pausa de 0.1 seg. entre las comunicaciones 
+            time.sleep(0.1)  # Pausa entre comunicaciones
             
             with mutex:
-                if len(visited) >= max_visits and not parar:  # Se ha alcanzado el número máximo de visitas 
+                if len(visited) >= max_visits and not parar:  # Si el número de visitas es mayor o igual al número de nodos visitados 
                     print(f"Se ha alcanzado el número máximo de visitas ({max_visits}). Nodos visitados: {len(visited)}")
-                    parar = True  # Se activa parar, para finalizar la ejecución de "gossip"
+                    parar = True # Parar poner a true 
                 if parar:
-                    return  # Salir si se ha alcanzado el máximo y se debe detener
+                    return # Terminar la ejecucción 
                 
-            # Si el nodo ya ha recibido el mensaje, no se retransmite de nuevo
-            if node in visited: 
-             print(f"Nodo {node} ya ha recibido el mensaje previamente y no lo retransmitirá.")
-             return
-    
-            if random.random() > p_stop:  # Si el número aleatorio es mayor al valor de la probabilidad p_stop 
+            # Si el nodo no ha sido visitado 
+            if node not in visited:
+               
                 with mutex:
-                    visited.add(node)  # Comunicar con el nodo 
-                print(f'Nodo {node} ha recibido el mensaje {message}.')
+                    visited.add(node)  # Se añade a la lista de los nodos visitados 
+                print(f'Nodo {node} ha recibido el mensaje {message}.') # El nodo recibe el mensaje 
                 
-                # Seleccionar hasta tres vecinos para continuar con la propagación
-                neighbors = network[node]
-                for neighbor in random.sample(neighbors, min(3, len(neighbors))):
-                    gossip(neighbor, message, network, visited, max_visits, p_stop, start_node)
-            else: 
-                print(f"Nodo {node} ha decidido no enviar el mensaje debido a la probabilidad.")
+                if random.random() > p_stop: # Si la propabilidad generada aleatoriamenta (entre 0 y 1), es mayor a la probabilidad definida 
+                    vecinos = network[node] # Para los nodos que se han definido en la red 
+                    for i in random.sample(vecinos, min(3, len(vecinos))): # Se seleccionan hasta tres vecinos de forma aleatoria 
+                        gossip(i, message, network, visited, max_visits, p_stop, start_node) 
+                else:  # Decide no enviar el mensaje
+                    print(f"Nodo {node} ha decidido no enviar el mensaje debido a la probabilidad.")
+            return  # Salir después de procesar
 
+# Función para main 
 def main():
     global parar
     start_node = 1
@@ -82,24 +79,25 @@ def main():
     p_stop = 0.5
     parar = False  
 
-    # Indicar nodos totales visitados 
-    start_time = time.time()
-    while time.time() - start_time < 1:  # Ejecutar durante 1 segundo
-        time.sleep(0.1)  
+    # # Indicar nodos totales visitados 
+    # start_time = time.time()
+    # while time.time() - start_time < 1:  # Ejecutar durante 1 segundo
+    #     time.sleep(0.1)  
 
-    threads = []
-    for node in network.keys():
-        thread = threading.Thread(target=gossip, args=(node, message, network, visited, max_visits, p_stop, start_node))
-        threads.append(thread)
-        thread.start()
+    # Creación de los hilos 
+    threads = [] # Lista para los hilos procesados 
+    for node in network.keys(): # Para los nodos generados en la red 
+        thread = threading.Thread(target=gossip, args=(node, message, network, visited, max_visits, p_stop, start_node)) # Los hilos ejecutan la función gossip, a la que se le indican sus argumentos
+        threads.append(thread) # Añadir hilo a la lista
+        thread.start() # Iniciar el hilo 
     
-    for thread in threads:
-        thread.join()
+    for thread in threads: # Para los hilos de la lista 
+        thread.join() # Esperar que terminen 
     
     # Indicar los nodos visitados respuecto del total de nodos de la red 
-    print(f'\n{"★ "*26}')
-    print(f'Han sido visitados {len(visited)} nodos de un total de {len(network)} nodos.')
-    print(f'{"★ "*26}\n')
+    print(f'\n{"★ "*58}')
+    print(f'Han sido visitados {len(visited)} nodos, que han sido {visited}, del total de {len(network)} nodos que hay en la red.')
+    print(f'{"★ "*58}\n')
 
 if __name__ == "__main__":
     main()
