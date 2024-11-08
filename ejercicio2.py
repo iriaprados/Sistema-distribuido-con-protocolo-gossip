@@ -49,7 +49,7 @@ def gossip(node, message, network, visited, max_visits, p_stop, start_node):
             
             with mutex:
                 if len(visited) >= max_visits and not parar:  # Si el número de visitas es mayor o igual al número de nodos visitados 
-                    print(f"Se ha alcanzado el número máximo de visitas ({max_visits}). Nodos visitados: {len(visited)}")
+                    # print(f"Se ha alcanzado el número máximo de visitas ({max_visits}). Nodos visitados: {len(visited)}")
                     parar = True # Parar poner a true 
                 if parar:
                     return # Terminar la ejecucción 
@@ -79,7 +79,7 @@ def main():
     p_stop = 0.5
     parar = False  
 
-    # # Indicar nodos totales visitados 
+    # Indicar nodos totales visitados 
     # start_time = time.time()
     # while time.time() - start_time < 1:  # Ejecutar durante 1 segundo
     #     time.sleep(0.1)  
@@ -94,7 +94,8 @@ def main():
     for thread in threads: # Para los hilos de la lista 
         thread.join() # Esperar que terminen 
     
-    # Indicar los nodos visitados respuecto del total de nodos de la red 
+    print(f"\nSe ha alcanzado el número máximo de visitas ({max_visits}). Nodos visitados: {len(visited)}")
+
     print(f'\n{"★ "*58}')
     print(f'Han sido visitados {len(visited)} nodos, que han sido {visited}, del total de {len(network)} nodos que hay en la red.')
     print(f'{"★ "*58}\n')
